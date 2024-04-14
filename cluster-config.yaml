@@ -43,10 +43,10 @@ options:
           - agent:*
 
     nodeLabels: # same as `--k3s-node-label'
-      - label: stamp.outsystemscloud.com/nodegroup=infra 
+      - label: label/nodegroup=infra 
         nodeFilters:
           - server:*
-      - label: stamp.outsystemscloud.com/nodegroup=jobs 
+      - label: label/nodegroup=jobs 
         nodeFilters:
           - agent:*
 
