@@ -1,0 +1,47 @@
+# k3d configuration file: https://k3d.io/v5.6.3/usage/configfile/
+
+apiVersion: k3d.io/v1alpha5 
+kind: Simple 
+metadata:
+  name: k3s-registry 
+
+kubeAPI: 
+  host: "k3d-registry.localhost"
+  hostIP: "127.0.0.1"  
+  hostPort: "6543"
+
+image: rancher/k3s:v1.29.3-k3s1 
+
+options:
+  k3s: 
+    extraArgs: 
+      - arg: "--disable=metrics-server"
+        nodeFilters:
+          - server:*
+      - arg: "--tls-san=k3d-registry.localhost"
+        nodeFilters:
+          - server:*
+
+  # ===================================
+
+  k3d: # k3d runtime settings
+    wait: true
+    timeout: "60s"
+    disableLoadbalancer: false # same as `--no-lb`
+    disableImageVolume: false # same as `--no-image-volume`
+    disableRollback: false # same as `--no-Rollback`
+    loadbalancer:
+      configOverrides:
+        - settings.workerConnections=2048
+
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: false
+
+registries: 
+  create: 
+    name: k3d-registry.localhost
+    host: "0.0.0.0"
+    hostPort: "5000"
+    volumes:
+      - /tmp:/var/lib/registry # persist registry data locally

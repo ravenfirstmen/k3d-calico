@@ -1,0 +1,92 @@
+# k3d configuration file: https://k3d.io/v5.6.3/usage/configfile/
+
+apiVersion: k3d.io/v1alpha5 
+kind: Simple 
+metadata:
+  name: k3s-default 
+servers: 1 
+agents: 3
+
+kubeAPI: 
+  hostPort: "6443"
+
+image: rancher/k3s:v1.29.3-k3s1 
+
+volumes: 
+  # - volume: ${PWD}/calico-manifest:/var/lib/rancher/k3s/server/manifests/calico-manifest
+  #   nodeFilters:
+  #     - server:*
+  - volume: ${PWD}/calico-operator:/var/lib/rancher/k3s/server/manifests/calico-operator
+    nodeFilters:
+      - server:*
+
+ports:
+  - port: 8080:80 
+    nodeFilters:
+      - loadbalancer
+
+options:
+  k3s: # options passed on to K3s itself
+    extraArgs: # same as `--k3s-arg`
+      - arg: "--disable=metrics-server"
+        nodeFilters:
+          - server:*
+      - arg: "--flannel-backend=none"
+        nodeFilters:
+          - server:*
+      - arg: "--disable-network-policy"   
+        nodeFilters: 
+          - server:*
+      - arg: "--kube-proxy-arg=conntrack-max-per-core=0"
+        nodeFilters:
+          - server:*
+          - agent:*
+
+    nodeLabels: # same as `--k3s-node-label'
+      - label: stamp.outsystemscloud.com/nodegroup=infra 
+        nodeFilters:
+          - server:*
+      - label: stamp.outsystemscloud.com/nodegroup=jobs 
+        nodeFilters:
+          - agent:*
+
+  # ===================================
+
+  k3d: # k3d runtime settings
+    wait: true
+    timeout: "60s"
+    disableLoadbalancer: false # same as `--no-lb`
+    disableImageVolume: false # same as `--no-image-volume`
+    disableRollback: false # same as `--no-Rollback`
+    loadbalancer:
+      configOverrides:
+        - settings.workerConnections=2048
+
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true
+
+registries: 
+  # create: 
+  #   name: k3d-registry.localhost
+  #   host: "0.0.0.0"
+  #   hostPort: "5000"
+  #   volumes:
+  #     - /tmp:/var/lib/registry # persist registry data locally
+  use:
+    - k3d-registry.localhost:5000
+  config: | 
+    mirrors:
+      "docker.io":
+        endpoint:
+          - http://k3d-registry.localhost:5000 
+      "quay.io":
+        endpoint:
+          - http://k3d-registry.localhost:5000 
+
+# heads up. In case of error: "failed to create CRI service: failed to create cni conf monitor for default: failed to create fsnotify watcher: too many open files"
+# raise the limits ion your kernel
+# ex:
+# fs.inotify.max_user_watches = 524288
+# fs.inotify.max_user_instances = 512
+# add to /etc/sysctl.d/20-inotify.conf
