@@ -1,0 +1,29 @@
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: tigera-operator
+  namespace: kube-system
+spec:
+  chart: https://%{KUBERNETES_API}%/static/tigera-operator-v3.27.3.tgz
+  targetNamespace: tigera-operator 
+  createNamespace: true 
+  valuesContent: |
+    installation:
+      enabled: true
+      kubernetesProvider: ""
+      cni:
+        type: Calico
+        ipam:
+          type: Calico
+      calicoNetwork:
+        bgp: Enabled
+        containerIPForwarding: Enabled
+        nodeAddressAutodetectionV4: 
+          interface: eth.*  
+        nodeAddressAutodetectionV6: {}
+        ipPools:
+        - cidr: 172.28.0.0/16
+          encapsulation: IPIP
+          natOutgoing: Enabled
+          nodeSelector: all()
