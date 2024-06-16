@@ -2,8 +2,8 @@
 
 export REGISTRY="k3d-registry.localhost:5000"
 
-export TIGERA_VERSION=1.32.7
-export CALICO_VERSION=3.27.3
+export TIGERA_VERSION=1.34.0
+export CALICO_VERSION=3.28.0
 
 docker pull quay.io/tigera/operator:v${TIGERA_VERSION}
 docker pull calico/typha:v${CALICO_VERSION}

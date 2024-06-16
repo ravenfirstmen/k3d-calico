@@ -2,10 +2,12 @@
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
-  name: tigera-operator
+  name: calico
   namespace: kube-system
 spec:
-  chart: https://%{KUBERNETES_API}%/static/tigera-operator-v3.27.3.tgz
+  repo: https://docs.tigera.io/calico/charts
+  chart: tigera-operator
+  version: v3.28.0
   targetNamespace: tigera-operator 
   createNamespace: true 
   valuesContent: |
