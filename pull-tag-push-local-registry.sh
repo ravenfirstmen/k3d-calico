@@ -4,6 +4,8 @@ export REGISTRY="k3d-registry.localhost:5000"
 
 export TIGERA_VERSION=1.34.0
 export CALICO_VERSION=3.28.0
+export ISTIO_VERSION=1.22.0
+export ISTIO_PROXY_VERSION=1.18.2
 
 docker pull quay.io/tigera/operator:v${TIGERA_VERSION}
 docker pull calico/typha:v${CALICO_VERSION}
@@ -41,3 +43,22 @@ docker push $REGISTRY/calico/dikastes:v${CALICO_VERSION}
 docker push $REGISTRY/calico/pod2daemon-flexvol:v${CALICO_VERSION}
 docker push $REGISTRY/calico/csi:v${CALICO_VERSION}
 docker push $REGISTRY/calico/node-driver-registrar:v${CALICO_VERSION}
+
+# istio
+docker pull istio/install-cni:${ISTIO_VERSION}-distroless
+docker pull istio/pilot:${ISTIO_VERSION}-distroless
+docker pull istio/proxyv2:${ISTIO_PROXY_VERSION}
+docker pull istio/proxyv2:${ISTIO_VERSION}-distroless
+docker pull istio/ztunnel:${ISTIO_VERSION}
+
+docker tag istio/install-cni:${ISTIO_VERSION}-distroless ${REGISTRY}/istio/install-cni:${ISTIO_VERSION}-distroless
+docker tag istio/pilot:${ISTIO_VERSION}-distroless ${REGISTRY}/istio/pilot:${ISTIO_VERSION}-distroless
+docker tag istio/proxyv2:${ISTIO_PROXY_VERSION} ${REGISTRY}/istio/proxyv2:${ISTIO_PROXY_VERSION}
+docker tag istio/proxyv2:${ISTIO_VERSION}-distroless ${REGISTRY}/istio/proxyv2:${ISTIO_VERSION}-distroless
+docker tag istio/ztunnel:${ISTIO_VERSION} ${REGISTRY}/istio/ztunnel:${ISTIO_VERSION}
+
+docker push ${REGISTRY}/istio/install-cni:${ISTIO_VERSION}-distroless
+docker push ${REGISTRY}/istio/pilot:${ISTIO_VERSION}-distroless
+docker push ${REGISTRY}/istio/proxyv2:${ISTIO_PROXY_VERSION}
+docker push ${REGISTRY}/istio/proxyv2:${ISTIO_VERSION}-distroless
+docker push ${REGISTRY}/istio/ztunnel:${ISTIO_VERSION}

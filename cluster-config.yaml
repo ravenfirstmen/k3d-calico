@@ -20,7 +20,16 @@ volumes:
       - server:*
       
 ports:
-  - port: 8080:80 
+  - port: 80:80
+    nodeFilters:
+      - loadbalancer
+  - port: 443:443 
+    nodeFilters:
+      - loadbalancer
+  - port: 8080:8080 
+    nodeFilters:
+      - loadbalancer
+  - port: 9000:9000 
     nodeFilters:
       - loadbalancer
 
@@ -42,6 +51,9 @@ options:
         nodeFilters:
           - server:*
           - agent:*
+      # - arg: "--disable=traefik"   
+      #   nodeFilters: 
+      #     - server:*
 
     nodeLabels: # same as `--k3s-node-label'
       - label: label/nodegroup=infra 

@@ -1,0 +1,65 @@
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: istio-base
+  namespace: kube-system
+spec:
+  repo: https://istio-release.storage.googleapis.com/charts 
+  chart: base
+  version: 1.22.0
+  targetNamespace: istio-system
+  createNamespace: true 
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: istio-cni
+  namespace: kube-system
+spec:
+  repo: https://istio-release.storage.googleapis.com/charts 
+  chart: cni
+  version: 1.22.0
+  targetNamespace: istio-system
+  createNamespace: true 
+  valuesContent: |
+    profile: ambient
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: istiod
+  namespace: kube-system
+spec:
+  repo: https://istio-release.storage.googleapis.com/charts 
+  chart: istiod
+  version: 1.22.0
+  targetNamespace: istio-system
+  createNamespace: true 
+  valuesContent: |
+    profile: ambient
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: ztunnel
+  namespace: kube-system
+spec:
+  repo: https://istio-release.storage.googleapis.com/charts 
+  chart: ztunnel
+  version: 1.22.0
+  targetNamespace: istio-system
+  createNamespace: true 
+---
+# apiVersion: helm.cattle.io/v1
+# kind: HelmChart
+# metadata:
+#   name: istio-ingress
+#   namespace: kube-system
+# spec:
+#   repo: https://istio-release.storage.googleapis.com/charts 
+#   chart: gateway
+#   version: 1.22.0
+#   targetNamespace: istio-system
+#   createNamespace: true 
+# ---
