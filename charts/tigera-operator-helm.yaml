@@ -7,7 +7,7 @@ metadata:
 spec:
   repo: https://docs.tigera.io/calico/charts
   chart: tigera-operator
-  version: v3.28.0
+  version: v3.27.0
   targetNamespace: tigera-operator 
   createNamespace: true 
   valuesContent: |
@@ -24,8 +24,45 @@ spec:
         nodeAddressAutodetectionV4: 
           interface: eth.*  
         nodeAddressAutodetectionV6: {}
-        ipPools:
-        - cidr: 172.28.0.0/16
-          encapsulation: IPIP
-          natOutgoing: Enabled
-          nodeSelector: all()
+
+---
+
+
+# {
+#   "name": "k8s-pod-network",
+#   "cniVersion": "0.3.1",
+#   "plugins": [
+#     {
+#       "type": "calico",
+#       "log_level": "debug",
+#       "log_file_path": "/var/log/calico/cni/cni.log",
+#       "datastore_type": "kubernetes",
+#       "nodename": "__KUBERNETES_NODE_NAME__",
+#       "nodename_file_optional": false,
+#       "mtu": __CNI_MTU__,
+#       "ipam": {
+#           "type": "calico-ipam",
+#           "assign_ipv4": "true", 
+#           "assign_ipv6": "false"
+#       },
+#       "container_settings": {
+#         "allow_ip_forwarding": true
+#       },
+#       "policy": {
+#           "type": "k8s"
+#       },
+#       "kubernetes": {
+#           "kubeconfig": "__KUBECONFIG_FILEPATH__"
+#       }
+#     },
+#     {
+#       "type": "portmap",
+#       "snat": true,
+#       "capabilities": {"portMappings": true}
+#     },
+#     {
+#       "type": "bandwidth",
+#       "capabilities": {"bandwidth": true}
+#     }
+#   ]
+# }          

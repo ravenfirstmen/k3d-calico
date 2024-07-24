@@ -4,8 +4,8 @@ apiVersion: k3d.io/v1alpha5
 kind: Simple 
 metadata:
   name: k3s-default 
-servers: 3 
-agents: 1
+servers: 1 
+agents: 3
 
 kubeAPI: 
   hostPort: "6443"
@@ -20,16 +20,10 @@ volumes:
       - server:*
       
 ports:
-  - port: 80:80
+  - port: 8080:80
     nodeFilters:
       - loadbalancer
-  - port: 443:443 
-    nodeFilters:
-      - loadbalancer
-  - port: 8080:8080 
-    nodeFilters:
-      - loadbalancer
-  - port: 9000:9000 
+  - port: 8443:443
     nodeFilters:
       - loadbalancer
 
@@ -42,18 +36,16 @@ options:
       # - arg: "--flannel-backend=none"
       #   nodeFilters:
       #     - server:*
-      #     - agent:*
       - arg: "--disable-network-policy"   
         nodeFilters: 
           - server:*
-          # - agent:*
       - arg: "--kube-proxy-arg=conntrack-max-per-core=0"
         nodeFilters:
           - server:*
           - agent:*
-      # - arg: "--disable=traefik"   
-      #   nodeFilters: 
-      #     - server:*
+      - arg: "--disable=traefik"   
+        nodeFilters: 
+          - server:*
 
     nodeLabels: # same as `--k3s-node-label'
       - label: label/nodegroup=infra 
@@ -79,7 +71,7 @@ options:
     updateDefaultKubeconfig: true
     switchCurrentContext: true
 
-registries: 
+# registries: 
   # create: 
   #   name: k3d-registry.localhost
   #   host: "0.0.0.0"
@@ -88,17 +80,17 @@ registries:
   #     - /tmp:/var/lib/registry # persist registry data locally
   # use:
   #   - k3d-registry.localhost:5000
-  config: | 
-    mirrors:
-      "k3d-registry.localhost:5000":
-        endpoint:
-          - http://k3d-registry.localhost:5000 
-      "docker.io":
-        endpoint:
-          - http://k3d-registry.localhost:5000 
-      "quay.io":
-        endpoint:
-          - http://k3d-registry.localhost:5000 
+  # config: | 
+  #   mirrors:
+  #     "k3d-registry.localhost:5000":
+  #       endpoint:
+  #         - http://k3d-registry.localhost:5000 
+  #     "docker.io":
+  #       endpoint:
+  #         - http://k3d-registry.localhost:5000 
+  #     "quay.io":
+  #       endpoint:
+  #         - http://k3d-registry.localhost:5000 
 
 # NOTE: if using a local registry with docker you need to connect both networks
 # RUN: docker network connect k3d-k3s-default k3d-registry.localhost

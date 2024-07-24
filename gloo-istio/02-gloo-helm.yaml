@@ -15,25 +15,3 @@ spec:
       enabled: true
     ingress:
       enabled: false
-      requireIngressClass: true
-    global:
-      istioIntegration:
-        disableAutoinjection: true
-      istioSDS:
-        enabled: true
-      glooMtls:
-        # enabled: true
-        istioProxy:
-          image:
-            registry: docker.io/istio
-            repository: proxyv2
-            tag: 1.22.0-distroless
-      #   sds:
-      #     image:
-      #       repository: sds
-      #       tag: 1.15.7
-    gatewayProxies:
-      gatewayProxy:
-        podTemplate: 
-          httpPort: 8080
-          httpsPort: 8443

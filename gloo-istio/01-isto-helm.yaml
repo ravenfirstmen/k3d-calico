@@ -38,18 +38,18 @@ spec:
   createNamespace: true 
   valuesContent: |
     profile: ambient
----
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: ztunnel
-  namespace: kube-system
-spec:
-  repo: https://istio-release.storage.googleapis.com/charts 
-  chart: ztunnel
-  version: 1.22.0
-  targetNamespace: istio-system
-  createNamespace: true 
+# ---
+# apiVersion: helm.cattle.io/v1
+# kind: HelmChart
+# metadata:
+#   name: ztunnel
+#   namespace: kube-system
+# spec:
+#   repo: https://istio-release.storage.googleapis.com/charts 
+#   chart: ztunnel
+#   version: 1.22.0
+#   targetNamespace: istio-system
+#   createNamespace: true 
 ---
 # apiVersion: helm.cattle.io/v1
 # kind: HelmChart
