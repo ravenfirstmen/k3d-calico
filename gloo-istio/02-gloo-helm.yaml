@@ -15,25 +15,45 @@ spec:
       enabled: true
     ingress:
       enabled: false
-      requireIngressClass: true
-    global:
-      istioIntegration:
-        disableAutoinjection: true
-      istioSDS:
-        enabled: true
-      glooMtls:
-        # enabled: true
-        istioProxy:
-          image:
-            registry: docker.io/istio
-            repository: proxyv2
-            tag: 1.22.0-distroless
-      #   sds:
-      #     image:
-      #       repository: sds
-      #       tag: 1.15.7
-    gatewayProxies:
-      gatewayProxy:
-        podTemplate: 
-          httpPort: 8080
-          httpsPort: 8443
+    settings:
+      rateLimit:
+        descriptors:
+          - key: headers_per_minute
+            value: "headers-per-minute"
+            rateLimit:
+              requestsPerUnit: 10
+              unit: MINUTE
+          - key: get_per_minute
+            value: "get-per-minute"
+            rateLimit:
+              requestsPerUnit: 4
+              unit: MINUTE
+      ratelimitServer:
+        rateLimitBeforeAuth: false
+        enableXRatelimitHeaders: true
+        ratelimitServerRef: # note: the gloo upstream!
+          name: rate-limit-ratelimit-8081
+          namespace: gloo-system
+
+    # requireIngressClass: true
+    # global:
+    #   istioIntegration:
+    #     disableAutoinjection: true
+    #   istioSDS:
+    #     enabled: true
+    #   glooMtls:
+    #     # enabled: true
+    #     istioProxy:
+    #       image:
+    #         registry: docker.io/istio
+    #         repository: proxyv2
+    #         tag: 1.22.0-distroless
+    #   #   sds:
+    #   #     image:
+    #   #       repository: sds
+    #   #       tag: 1.15.7
+    # gatewayProxies:
+    #   gatewayProxy:
+    #     podTemplate: 
+    #       httpPort: 8080
+    #       httpsPort: 8443

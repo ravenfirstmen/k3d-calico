@@ -91,8 +91,37 @@ metadata:
 spec:
   virtualHost:
     domains:
-    - '*'
+    - 'httpbin.127-0-0-1.nip.io'
     routes:
+    - matchers:
+      - exact: /headers
+      options:
+        ratelimit:
+            rateLimits:
+              - actions:
+                  - genericKey:
+                      descriptorValue: "headers-per-minute"      
+      routeAction:
+        single:
+          upstream:
+            name: httpbin-httpbin-8000
+            namespace: gloo-system
+
+    - matchers:
+      - exact: /get
+      options:
+        ratelimit:
+            rateLimits:
+              - actions:
+                  - genericKey:
+                      descriptorValue: "get-per-minute"      
+      routeAction:
+        single:
+          upstream:
+            name: httpbin-httpbin-8000
+            namespace: gloo-system
+
+
     - matchers:
       - prefix: /
       routeAction:
