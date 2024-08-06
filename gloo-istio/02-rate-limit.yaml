@@ -1,54 +1,9 @@
-# Copyright Istio Authors
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-
-##################################################################################################
-# Redis service and deployment
-# Ratelimit service and deployment
-
-# Note: a configmap is needed to make the rate limit deployment work properly, for example:
-#
-#  apiVersion: v1
-#  kind: ConfigMap
-#  metadata:
-#    name: ratelimit-config
-#  data:
-#    config.yaml: |
-#      domain: echo-ratelimit
-#      descriptors:
-#        - key: PATH
-#          value: "/"
-#          rate_limit:
-#            unit: minute
-#            requests_per_unit: 1
-#        - key: PATH
-#          rate_limit:
-#            unit: minute
-#            requests_per_unit: 100
-##################################################################################################
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: rate-limit
-  labels:
-    name: rate-limit
 ---    
 apiVersion: v1
 kind: Service
 metadata:
   name: redis
-  namespace: rate-limit
+  namespace: gloo-system
   labels:
     app: redis
 spec:
@@ -62,7 +17,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
-  namespace: rate-limit
+  namespace: gloo-system
 spec:
   replicas: 1
   selector:
@@ -86,10 +41,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ratelimit
-  namespace: rate-limit
+  name: rate-limit
+  namespace: gloo-system
   labels:
-    app: ratelimit
+    app: rate-limit
 spec:
   ports:
   - name: http-port
@@ -100,34 +55,30 @@ spec:
     port: 8081
     targetPort: 8081
     protocol: TCP
-  - name: http-debug
-    port: 6070
-    targetPort: 6070
-    protocol: TCP
   selector:
-    app: ratelimit
+    app: rate-limit
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ratelimit
-  namespace: rate-limit
+  name: rate-limit
+  namespace: gloo-system
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ratelimit
+      app: rate-limit
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: ratelimit
+        app: rate-limit
     spec:
       containers:
       - image: envoyproxy/ratelimit:94096740 # 2024-08-01
         imagePullPolicy: IfNotPresent
-        name: ratelimit
+        name: rate-limit
         command: ["/bin/ratelimit"]
         env:
         - name: LOG_LEVEL
@@ -162,24 +113,30 @@ spec:
       volumes:
       - name: config-volume
         configMap:
-          name: ratelimit-config        
+          name: rate-limit-config        
 ---
  apiVersion: v1
  kind: ConfigMap
  metadata:
-   name: ratelimit-config
-   namespace: rate-limit   
+   name: rate-limit-config
+   namespace: gloo-system   
  data:
    config.yaml: |
      domain: 'custom'
      descriptors:
        - key: generic_key
-         value: "headers-per-minute"
+         value: "headers-path-per-minute"
          rate_limit:
            unit: minute
            requests_per_unit: 10
        - key: generic_key
-         value: "get-per-minute"
+         value: "get-path-per-minute"
          rate_limit:
            unit: minute
            requests_per_unit: 2
+       - key: for_an_http_header
+         value: "an_http_header"
+         rate_limit:
+           unit: minute
+           requests_per_unit: 1
+

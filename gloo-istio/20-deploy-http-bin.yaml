@@ -5,7 +5,6 @@ metadata:
   name: httpbin
   labels:
     name: httpbin
-    istio-injection: enabled
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -100,7 +99,7 @@ spec:
             rateLimits:
               - actions:
                   - genericKey:
-                      descriptorValue: "headers-per-minute"      
+                      descriptorValue: "headers-path-per-minute"      
       routeAction:
         single:
           upstream:
@@ -114,7 +113,7 @@ spec:
             rateLimits:
               - actions:
                   - genericKey:
-                      descriptorValue: "get-per-minute"      
+                      descriptorValue: "get-path-per-minute"      
       routeAction:
         single:
           upstream:
@@ -129,3 +128,12 @@ spec:
           upstream:
             name: httpbin-httpbin-8000
             namespace: gloo-system
+
+    options:
+      ratelimit:
+        rateLimits:
+          - actions:
+              - requestHeaders:
+                  descriptorKey: for_an_http_header
+                  headerName: x-an-header # header x-an-header: an_http_header
+
