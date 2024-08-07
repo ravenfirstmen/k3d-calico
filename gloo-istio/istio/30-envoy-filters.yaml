@@ -1,0 +1,108 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: httpbin-ratelimit
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      istio: ingress
+
+  configPatches:
+
+    - applyTo: CLUSTER
+      match:
+        cluster:
+          service: rate-limit.istio-system.svc.cluster.local
+      patch:
+        operation: ADD
+        value:
+          name: rate_limiter
+          type: STRICT_DNS
+          connect_timeout: 10s
+          lb_policy: ROUND_ROBIN
+          protocol_selection: USE_CONFIGURED_PROTOCOL
+          http2_protocol_options: {}
+          load_assignment:
+            cluster_name: rate_limiter
+            endpoints:
+            - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: rate-limit.istio-system.svc.cluster.local
+                      port_value: 8081
+    
+
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: 'envoy.filters.network.http_connection_manager'
+              subFilter:
+                name: 'envoy.filters.http.router'
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.filters.http.ratelimit
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+            domain: rate-limiter
+            enable_x_ratelimit_headers: DRAFT_VERSION_03
+            timeout: 5s
+            rate_limited_as_resource_exhausted: true
+            failure_mode_deny: true
+            rate_limit_service:
+              grpc_service:
+                envoy_grpc:
+                  cluster_name: rate_limiter
+              transport_api_version: V3
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: httpbin-rate-limit-settings
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      istio: ingress
+
+  configPatches:
+    - applyTo: VIRTUAL_HOST
+      match:
+        context: GATEWAY
+        routeConfiguration:
+          vhost:
+              name: ""
+              route:
+                action: ANY
+          # gateway: ingress-gateway
+          # portNumber: 80
+          # portName: http
+      patch:
+        operation: MERGE
+        value:
+          rate_limits:
+            - actions:
+              - header_value_match:
+                    descriptor_value: "get"
+                    headers:
+                      - name: :path
+                        prefix_match: /get
+
+            - actions:
+                - header_value_match:
+                    descriptor_value: "headers"
+                    headers:
+                      - name: :path
+                        prefix_match: /headers
+
+            - actions:
+                - request_headers:
+                    header_name: "x-an-header" # header x-an-header: an_http_header
+                    descriptor_key: "for_an_http_header"

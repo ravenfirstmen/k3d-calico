@@ -1,0 +1,143 @@
+---    
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: istio-system
+  labels:
+    app: redis
+spec:
+  ports:
+  - name: redis
+    port: 6379
+  selector:
+    app: redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: istio-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - image: redis:alpine
+        imagePullPolicy: IfNotPresent
+        name: redis
+        ports:
+        - name: redis
+          containerPort: 6379
+      restartPolicy: Always
+      serviceAccountName: ""
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rate-limit
+  namespace: istio-system
+  labels:
+    app: rate-limit
+spec:
+  ports:
+  - name: http-port
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: grpc-port
+    port: 8081
+    targetPort: 8081
+    protocol: TCP
+  selector:
+    app: rate-limit
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rate-limit
+  namespace: istio-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rate-limit
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: rate-limit
+    spec:
+      containers:
+      - image: envoyproxy/ratelimit:94096740 # 2024-08-01
+        imagePullPolicy: IfNotPresent
+        name: rate-limit
+        command: ["/bin/ratelimit"]
+        env:
+        - name: LOG_LEVEL
+          value: debug
+        - name: REDIS_SOCKET_TYPE
+          value: tcp
+        - name: REDIS_URL
+          value: redis:6379
+        - name: USE_STATSD
+          value: "false"
+        - name: DISABLE_STATS
+          value: "true"
+        - name: FORCE_START_WITHOUT_INITIAL_CONFIG
+          value: "true"
+        - name: RUNTIME_ROOT
+          value: /data
+        - name: RUNTIME_SUBDIRECTORY
+          value: ratelimit
+        - name: RUNTIME_WATCH_ROOT
+          value: "false"
+        - name: RUNTIME_IGNOREDOTFILES
+          value: "true"          
+        - name: HOST
+          value: "::"
+        - name: GRPC_HOST
+          value: "::"
+        ports:
+        - containerPort: 8080
+        - containerPort: 8081
+        - containerPort: 6070
+        volumeMounts:
+        - name: config-volume
+          mountPath: /data/ratelimit/config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: rate-limit-config        
+---
+ apiVersion: v1
+ kind: ConfigMap
+ metadata:
+   name: rate-limit-config
+   namespace: istio-system   
+ data:
+   config.yaml: |
+     domain: 'rate-limiter'
+     descriptors:
+       - key: header_match
+         value: "headers" 
+         rate_limit:
+           unit: minute
+           requests_per_unit: 10
+       - key: header_match
+         value: "get"
+         rate_limit:
+           unit: minute
+           requests_per_unit: 2
+       - key: for_an_http_header
+         value: "an_http_header"
+         rate_limit:
+           unit: minute
+           requests_per_unit: 1

@@ -1,0 +1,12 @@
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: istio-ingress
+  namespace: kube-system
+spec:
+  repo: https://istio-release.storage.googleapis.com/charts 
+  chart: gateway
+  version: 1.22.0
+  targetNamespace: istio-system
+  createNamespace: true 
