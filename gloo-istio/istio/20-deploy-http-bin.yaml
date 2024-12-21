@@ -47,23 +47,11 @@ spec:
     spec:
       serviceAccountName: httpbin
       containers:
-        - image: docker.io/kong/httpbin
-          imagePullPolicy: IfNotPresent
-          name: httpbin
-          # Same as found in Dockerfile's CMD but using an unprivileged port
-          command:
-          - gunicorn
-          - -b
-          - 0.0.0.0:8080
-          - httpbin:app
-          - -k
-          - gevent
-          env:
-          # Tells pipenv to use a writable directory instead of $HOME
-          - name: WORKON_HOME
-            value: /tmp
-          ports:
-          - containerPort: 8080
+      - image: docker.io/mccutchen/go-httpbin:v2.15.0
+        imagePullPolicy: IfNotPresent
+        name: httpbin
+        ports:
+        - containerPort: 8080          
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService

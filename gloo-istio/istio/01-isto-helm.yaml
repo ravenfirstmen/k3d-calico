@@ -10,18 +10,18 @@ spec:
   version: 1.22.0
   targetNamespace: istio-system
   createNamespace: true 
----
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: istio-cni
-  namespace: kube-system
-spec:
-  repo: https://istio-release.storage.googleapis.com/charts 
-  chart: cni
-  version: 1.22.0
-  targetNamespace: istio-system
-  createNamespace: true 
+# ---
+# apiVersion: helm.cattle.io/v1
+# kind: HelmChart
+# metadata:
+#   name: istio-cni
+#   namespace: kube-system
+# spec:
+#   repo: https://istio-release.storage.googleapis.com/charts 
+#   chart: cni
+#   version: 1.22.0
+#   targetNamespace: istio-system
+#   createNamespace: true 
 ---
 apiVersion: helm.cattle.io/v1
 kind: HelmChart

@@ -18,7 +18,11 @@ volumes:
   - volume: ${PWD}/charts:/var/lib/rancher/k3s/server/manifests/charts
     nodeFilters:
       - server:*
-      
+  - volume: ${PWD}/machine-id:/etc/machine-id
+    nodeFilters:
+      - server:*
+      - agent:*
+
 ports:
   - port: 80:80
     nodeFilters:
@@ -26,10 +30,28 @@ ports:
   - port: 443:443 
     nodeFilters:
       - loadbalancer
+  - port: 4222:4222 
+    nodeFilters:
+      - loadbalancer
+  - port: 3000:3000 
+    nodeFilters:
+      - loadbalancer
+  - port: 3100:3100 
+    nodeFilters:
+      - loadbalancer
+  - port: 4566:4566 
+    nodeFilters:
+      - loadbalancer
   - port: 8080:8080 
     nodeFilters:
       - loadbalancer
   - port: 9000:9000 
+    nodeFilters:
+      - loadbalancer
+  - port: 6000:6000 
+    nodeFilters:
+      - loadbalancer
+  - port: 9090:9090 
     nodeFilters:
       - loadbalancer
 
@@ -43,17 +65,17 @@ options:
       #   nodeFilters:
       #     - server:*
       #     - agent:*
-      - arg: "--disable-network-policy"   
-        nodeFilters: 
-          - server:*
+      # - arg: "--disable-network-policy"   
+      #   nodeFilters: 
+      #     - server:*
           # - agent:*
       - arg: "--kube-proxy-arg=conntrack-max-per-core=0"
         nodeFilters:
           - server:*
           - agent:*
-      - arg: "--disable=traefik"   
-        nodeFilters: 
-          - server:*
+      # - arg: "--disable=traefik"   
+      #   nodeFilters: 
+      #     - server:*
 
     nodeLabels: # same as `--k3s-node-label'
       - label: label/nodegroup=infra 
@@ -79,11 +101,11 @@ options:
     updateDefaultKubeconfig: true
     switchCurrentContext: true
 
-# registries: 
-  # create: 
-  #   name: k3d-registry.localhost
-  #   host: "0.0.0.0"
-  #   hostPort: "5000"
+registries: 
+  create: 
+    name: k3d-registry.localhost
+    host: "0.0.0.0"
+    hostPort: "5000"
   #   volumes:
   #     - /tmp:/var/lib/registry # persist registry data locally
   # use:

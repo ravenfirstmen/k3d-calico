@@ -37,7 +37,7 @@ spec:
       enabled: true
       service:
         port: 3100
-        type: ClusterIP
+        type: LoadBalancer
       ingress:
         enabled: true
         ingressClassName: "traefik"
@@ -131,24 +131,12 @@ spec:
     adminPassword: admin
     service:
       port: 3000
-      type: ClusterIP
+      type: LoadBalancer
     ingress:
       enabled: false
     metrics:
       enabled: true
-
-    grafana.ini:
-      auth:
-        disable_login_form: true
-      auth.basic:
-        enabled: false
-      auth.anonymous:
-        enabled: true
-        org_role: "Admin"
-        org_name: "Main Org."
-
     datasources:
-
         datasources.yaml:
           apiVersion: 1
           datasources:
@@ -186,57 +174,23 @@ spec:
                 serviceMap:
                   datasourceUid: prom   
 ---
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: prometheus
-  namespace: kube-system
+  name: grafana
+  namespace: monitoring
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"          
 spec:
-  repo: https://prometheus-community.github.io/helm-charts
-  chart: kube-prometheus-stack
-  targetNamespace: monitoring
-  createNamespace: true  
-  valuesContent: |-
-    grafana:
-      enabled: false
-    nodeExporter:
-      enabled: false
-    prometheus:
-      service:
-        type: ClusterIP
----
-apiVersion: gateway.solo.io/v1
-kind: VirtualService
-metadata:
-  name: grafana-vs
-  namespace: gloo-system
-spec:
-  virtualHost:
-    domains:
-    - 'grafana.127-0-0-1.nip.io'
-    routes:
-    - matchers:
-      - prefix: /
-      routeAction:
-        single:
-          upstream:
-            name: monitoring-grafana-3000
-            namespace: gloo-system
----
-apiVersion: gateway.solo.io/v1
-kind: VirtualService
-metadata:
-  name: prometheus-vs
-  namespace: gloo-system
-spec:
-  virtualHost:
-    domains:
-    - 'prometheus.127-0-0-1.nip.io'
-    routes:
-    - matchers:
-      - prefix: /
-      routeAction:
-        single:
-          upstream:
-            name: monitoring-prometheus-operated-9090
-            namespace: gloo-system            
+  ingressClassName: traefik
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000 
+
