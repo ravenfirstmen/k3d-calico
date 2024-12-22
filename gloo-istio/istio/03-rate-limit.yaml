@@ -51,12 +51,139 @@ spec:
     port: 8080
     targetPort: 8080
     protocol: TCP
+  - name: debug-port
+    port: 6070
+    targetPort: 6070
+    protocol: TCP
   - name: grpc-port
     port: 8081
     targetPort: 8081
     protocol: TCP
+  - name: metrics-port
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
   selector:
     app: rate-limit
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    release: prometheus
+  name: rate-limit
+  namespace: istio-system
+spec:
+  endpoints:
+  - interval: 5s
+    path: /metrics
+    port: metrics-port
+  namespaceSelector:
+    matchNames:
+    - istio-system
+  selector:
+    matchLabels:
+      app: rate-limit
+
+# sum(ratelimit_service_rate_limit_over_limit{} ) by (key1)
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-mappings
+  namespace: istio-system    
+data:
+  prometheus-mappings.yaml: |-
+    # Requires statsd exporter >= v0.6.0 since it uses the "drop" action.
+    mappings:
+      - match: "ratelimit.service.rate_limit.*.*.near_limit"
+        name: "ratelimit_service_rate_limit_near_limit"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+      - match: "ratelimit.service.rate_limit.*.*.over_limit"
+        name: "ratelimit_service_rate_limit_over_limit"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+      - match: "ratelimit.service.rate_limit.*.*.total_hits"
+        name: "ratelimit_service_rate_limit_total_hits"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+      - match: "ratelimit.service.rate_limit.*.*.within_limit"
+        name: "ratelimit_service_rate_limit_within_limit"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+    
+      - match: "ratelimit.service.rate_limit.*.*.*.near_limit"
+        name: "ratelimit_service_rate_limit_near_limit"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+          key2: "$3"
+      - match: "ratelimit.service.rate_limit.*.*.*.over_limit"
+        name: "ratelimit_service_rate_limit_over_limit"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+          key2: "$3"
+      - match: "ratelimit.service.rate_limit.*.*.*.total_hits"
+        name: "ratelimit_service_rate_limit_total_hits"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+          key2: "$3"
+      - match: "ratelimit.service.rate_limit.*.*.*.within_limit"
+        name: "ratelimit_service_rate_limit_within_limit"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+          key2: "$3"
+    
+      - match: "ratelimit.service.call.should_rate_limit.*"
+        name: "ratelimit_service_should_rate_limit_error"
+        match_metric_type: counter
+        labels:
+          err_type: "$1"
+    
+      - match: "ratelimit_server.*.total_requests"
+        name: "ratelimit_service_total_requests"
+        match_metric_type: counter
+        labels:
+          grpc_method: "$1"
+    
+      - match: "ratelimit_server.*.response_time"
+        name: "ratelimit_service_response_time_seconds"
+        timer_type: histogram
+        labels:
+          grpc_method: "$1"
+    
+      - match: "ratelimit.service.config_load_success"
+        name: "ratelimit_service_config_load_success"
+        match_metric_type: counter
+    
+      - match: "ratelimit.service.config_load_error"
+        name: "ratelimit_service_config_load_error"
+        match_metric_type: counter
+    
+      - match: "ratelimit.service.rate_limit.*.*.*.shadow_mode"
+        name: "ratelimit_service_rate_limit_shadow_mode"
+        timer_type: "histogram"
+        labels:
+          domain: "$1"
+          key1: "$2"
+          key2: "$3"  
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -76,7 +203,7 @@ spec:
         app: rate-limit
     spec:
       containers:
-      - image: envoyproxy/ratelimit:94096740 # 2024-08-01
+      - image: envoyproxy/ratelimit:6a2e8262 # 2024-12-01
         imagePullPolicy: IfNotPresent
         name: rate-limit
         command: ["/bin/ratelimit"]
@@ -86,11 +213,19 @@ spec:
         - name: REDIS_SOCKET_TYPE
           value: tcp
         - name: REDIS_URL
-          value: redis:6379
+          value: redis:6379          
+        - name: DISABLE_STATS
+          value: "false"
+        - name: USE_DOG_STATSD
+          value: "false"
         - name: USE_STATSD
           value: "false"
-        - name: DISABLE_STATS
+        - name: USE_PROMETHEUS
           value: "true"
+        - name: STATS_FLUSH_INTERVAL
+          value: "5s"
+        # - name: PROMETHEUS_MAPPER_YAML
+        #   value: "/etc/config/prometheus-mappings.yaml"
         - name: FORCE_START_WITHOUT_INITIAL_CONFIG
           value: "true"
         - name: RUNTIME_ROOT
@@ -109,13 +244,20 @@ spec:
         - containerPort: 8080
         - containerPort: 8081
         - containerPort: 6070
+        - containerPort: 9090
         volumeMounts:
         - name: config-volume
           mountPath: /data/ratelimit/config
+        - name: prometheus-mappings
+          mountPath: /etc/config/prometheus-mappings.yaml
+          readOnly: true          
       volumes:
       - name: config-volume
         configMap:
-          name: rate-limit-config        
+          name: rate-limit-config
+      - name: prometheus-mappings
+        configMap:
+          name: prometheus-mappings
 ---
  apiVersion: v1
  kind: ConfigMap

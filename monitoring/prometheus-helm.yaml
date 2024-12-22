@@ -17,6 +17,11 @@ spec:
     prometheus:
       service:
         type: LoadBalancer
+      prometheusSpec:
+        ruleSelectorNilUsesHelmValues: false
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        probeSelectorNilUsesHelmValues: false        
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
