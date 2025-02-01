@@ -11,8 +11,8 @@ spec:
         exposedPort: 8000
             
       websecure:
-        port: 8443
-        exposedPort: 8443    
+        port: 8543
+        exposedPort: 8543    
                 
     ingressClass:  # @schema additionalProperties: false
       enabled: true
