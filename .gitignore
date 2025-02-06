@@ -1,3 +1,4 @@
 gloo-istio/gloo_config.yaml
 **/operator/
 **/machine-id
+**/certs
