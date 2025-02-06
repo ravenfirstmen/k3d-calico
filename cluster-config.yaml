@@ -13,7 +13,7 @@ kubeAPI:
 image: rancher/k3s:v1.29.3-k3s1 
 
 volumes: 
-  - volume: ${PWD}/charts:/var/lib/rancher/k3s/server/manifests/charts
+  - volume: ${PWD}/manifests:/var/lib/rancher/k3s/server/manifests/charts
     nodeFilters:
       - server:*
   - volume: ${PWD}/machine-id:/etc/machine-id

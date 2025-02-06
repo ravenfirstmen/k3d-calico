@@ -47,23 +47,18 @@ spec:
     spec:
       serviceAccountName: httpbin
       containers:
-        - image: docker.io/kong/httpbin
+        - image: docker.io/mccutchen/go-httpbin:v2.15.0
           imagePullPolicy: IfNotPresent
           name: httpbin
-          # Same as found in Dockerfile's CMD but using an unprivileged port
-          command:
-          - gunicorn
-          - -b
-          - 0.0.0.0:8080
-          - httpbin:app
-          - -k
-          - gevent
-          env:
-          # Tells pipenv to use a writable directory instead of $HOME
-          - name: WORKON_HOME
-            value: /tmp
           ports:
-          - containerPort: 8080
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "500m"
+              memory: 512Mi
+            requests:
+              cpu: "500m"
+              memory: 512Mi
 ---
 apiVersion: gateway.solo.io/v1
 kind: VirtualService
@@ -71,9 +66,14 @@ metadata:
   name: httpbin-vs
   namespace: gloo-system
 spec:
+  sslConfig:
+    secretRef:
+      name: gloo-tls
+      namespace: gloo-system
   virtualHost:
     domains:
-    - 'httpbin.127-0-0-1.nip.io'
+    # - 'httpbin.127-0-0-1.nip.io'
+    - '*'
     routes:
     - matchers:
       - exact: /headers

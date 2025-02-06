@@ -1,0 +1,50 @@
+---
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: 1000-deny-all
+spec:
+  namespaceSelector: all()
+  types:
+    - Ingress
+    - Egress
+  order: 1000
+  ingress:
+    - action: Deny
+  egress:
+    - action: Deny
+---
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: 900-allow-default-namespaces
+spec:
+  namespaceSelector: projectcalico.org/name in { 'kube-system', 'default', 'netshoot'}
+  types:
+    - Ingress
+    - Egress
+  order: 900
+  ingress:
+    - action: Allow
+  egress:
+    - action: Allow
+---
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: httpbin-policy
+spec:
+  order: 100
+  types:
+    - Ingress
+    - Egress
+  egress:
+  - action: Allow
+    destination: {}
+    source: {}
+  ingress:
+  - action: Allow
+    source: 
+      namespaceSelector: projectcalico.org/name in {'kube-system'}
+    destination: {}
+  namespaceSelector: projectcalico.org/name in {'httpbin'}
